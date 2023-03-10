@@ -59,6 +59,10 @@ def extractMainLobe(window, M):
     """
 
     w = get_window(window, M)         # get the window 
-    
     ### Your code here
-    
+
+
+if __name__ == "__main__":
+    assert extractMainLobe("blackmanharris", 100) == 65
+    assert extractMainLobe("boxcar", 120) == 120
+    assert extractMainLobe("hamming", 256) == 256
