@@ -58,11 +58,28 @@ def extractMainLobe(window, M):
             spectrum of the window in decibels (dB).
     """
 
-    w = get_window(window, M)         # get the window 
-    ### Your code here
+    N = 8 * M
+    w = get_window(window, M)         # get the window
+    x = 20 * np.log10(np.abs(fftshift(fft(w, N)) + 1e-16))
+    
+    center_idx = N // 2
+
+    right_idx = center_idx
+    while True:
+        right_idx += 1
+        if x[right_idx] > x[right_idx - 1]:
+            break
+
+    left_idx = center_idx
+    while True:
+        left_idx -= 1
+        if x[left_idx] > x[left_idx + 1]:
+            break
+
+    return x[left_idx + 1:right_idx]
 
 
 if __name__ == "__main__":
-    assert extractMainLobe("blackmanharris", 100) == 65
-    assert extractMainLobe("boxcar", 120) == 120
-    assert extractMainLobe("hamming", 256) == 256
+    assert len(extractMainLobe("blackmanharris", 100)) == 65
+    assert len(extractMainLobe("boxcar", 120)) == 17
+    assert len(extractMainLobe("hamming", 256)) == 33
