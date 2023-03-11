@@ -5,7 +5,7 @@ import math
 from scipy.signal import get_window
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../software/models/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../../software/models/'))
 import stft
 import utilFunctions as UF
 eps = np.finfo(float).eps
@@ -59,4 +59,20 @@ def computeSNR(inputFile, window, M, N, H):
             The function should return a python tuple of both the SNR values (SNR1, SNR2)
             SNR1 and SNR2 are floats.
     """
-    ## your code here
+
+    def energy(signal):
+        return np.sum(np.abs(signal) ** 2)
+
+    window = get_window(window, M)
+
+    (_, original_signal) = UF.wavread(inputFile)
+    stft_signal = stft.stft(original_signal, window, N, H)
+    noise_signal = stft_signal - original_signal
+
+    cut_original_signal = original_signal[M:-M]
+    cut_noise_signal = stft_signal[M:-M] - cut_original_signal
+
+    sr1 = 10 * np.log10(energy(original_signal) / energy(noise_signal))
+    sr2 = 10 * np.log10(energy(original_signal) / energy(cut_noise_signal))
+
+    return (sr1, sr2)
