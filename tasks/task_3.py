@@ -3,8 +3,9 @@ import sys
 import numpy as np
 from scipy.signal import get_window
 import matplotlib.pyplot as plt
+import math
 
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../software/models/'))
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../../software/models/'))
 import stft
 import utilFunctions as UF
 
@@ -65,6 +66,7 @@ test cases.You can clearly notice the sharp attacks and decay of the piano notes
 uses a larger window. You can infer the influence of window size on sharpness of the note attacks 
 and discuss it on the forums.
 """
+
 def computeEngEnv(inputFile, window, M, N, H):
     """
     Inputs:
@@ -80,6 +82,26 @@ def computeEngEnv(inputFile, window, M, N, H):
             engEnv[:,0]: Energy envelope in band 0 < f < 3000 Hz (in dB)
             engEnv[:,1]: Energy envelope in band 3000 < f < 10000 Hz (in dB)
     """
-    
-    ### your code here
-    
+    def select_band(binFrequencies, lowerBound, upperBound):
+        return np.where(binFrequencies > lowerBound)[0][0], np.where(binFrequencies < upperBound)[0][-1]
+
+    def square_magnitude(mX, lowerBound, upperBound):
+        np.square(mX)[:, lowerBound:upperBound+1]
+
+    w = get_window(window, M)  # get the window
+    fs, x = UF.wavread(inputFile)  # read in the inputFile
+
+    mX, pX = stft.stftAnal(x, w, N, H)
+    mX = 10**(mX/20.0)          # magnitude in linear scale
+
+    numFrames = int(mX[:, 0].size)
+    binFreq = np.arange(N / 2 + 1) * float(fs) / N
+
+    lowBandSqMX = square_magnitude(mX, *select_band(binFreq, 0, 3000))
+    highBandSqMX = square_magnitude(mX, *select_band(binFreq, 3000, 10000))
+
+    engEnv = np.zeros((numFrames, 2))
+    engEnv[:, 0] = 10*np.log10(np.sum(lowBandSqMX, 1))
+    engEnv[:, 1] = 10*np.log10(np.sum(highBandSqMX, 1))
+
+    return engEnv
